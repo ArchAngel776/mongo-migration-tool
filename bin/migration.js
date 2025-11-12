@@ -3,6 +3,11 @@
 const path = require("path");
 const fs = require("fs");
 
+const { Connection } = require("../build/index");
+
+
+const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS } = process.env
+
 
 const YEAR_LENGTH   = 4;
 const MONTH_LENGTH  = 2;
@@ -68,6 +73,66 @@ class MigrationNameException extends Error
 
 
 /**
+ * Prepare database structure for migrations system.
+ * 
+ * @returns {Promise<void>}
+ */
+async function install()
+{
+    const client = await Connection.create(DB_HOST, DB_PORT).connect(DB_NAME, DB_USER, DB_PASS);
+
+
+    const db = client.db(DB_NAME);
+
+    const collections = await db.collections();
+
+    if (collections.some(({ collectionName }) => collectionName === "migrations"))
+    {
+        console.log("Migrations system has been already installed.");
+        console.log("No action needed.");
+
+        return;
+    }
+
+
+    await db.createCollection("migrations", {
+        validator: {
+            $jsonSchema: {
+                title: "Database migrations validator",
+                bsonType: "object",
+                required: ["_id", "migration_name", "created_at"],
+                properties: {
+                    _id: {
+                        bsonType: "objectId",
+                        description: "'_id' must be valid ObjectID object"
+                    },
+                    migration_name: {
+                        bsonType: "string",
+                        description: "name of migration must be valid string type"
+                    },
+                    created_at: {
+                        bsonType: "date",
+                        description: "'created_at' param must be valid date"
+                    }
+                },
+                additionalProperties: false
+            }
+        }
+    });
+
+    await db.collection("migrations").createIndex({ migration_name: 1 }, {
+        name: "migration",
+        unique: true
+    });
+
+
+    await client.close();
+
+    console.log("Migrations system installed successfully.");
+}
+
+
+/**
  * Create a new migration file.
  * 
  * @param {string} name
@@ -109,6 +174,11 @@ async function main(command, args)
 {
     switch (command)
     {
+        case "install":
+        {
+            await install();
+            break;
+        }
         case "create":
         {
             const [ name ] = args;
