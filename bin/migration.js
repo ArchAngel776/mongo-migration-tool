@@ -2,8 +2,9 @@
 
 const path = require("path");
 const fs = require("fs");
+const { ObjectId } = require("mongodb");
 
-const { Connection } = require("../build/index");
+const { Connection, Transaction } = require("../build/index");
 
 
 const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS } = process.env
@@ -165,6 +166,72 @@ function create(name)
 
 
 /**
+ * Apply all fresh migrations.
+ * 
+ * @async
+ * @returns {Promise<void>}
+ */
+async function up()
+{
+    const client = await Connection.create(DB_HOST, DB_PORT).connect(DB_NAME, DB_USER, DB_PASS);
+    
+    const db = client.db(DB_NAME);
+
+
+    const migrations = fs.readdirSync("migrations").filter(filename => filename.endsWith(".js")).map(filename => path.parse(filename).name);
+
+    const appliedMigrations = await db.collection("migrations").find().project({ migration_name: 1 }).map(({ migration_name }) => migration_name).toArray();
+
+    const migrationsToApply = migrations.filter(migration => !appliedMigrations.includes(migration));
+
+
+    if (migrationsToApply.length === 0)
+    {
+        console.log("No new migrations to apply.");
+        return;
+    }
+
+    console.log("Following migrations are going to be applied:");
+
+    migrationsToApply.forEach(migration => console.log(`\t${migration}`));
+
+
+    for (const migration of migrationsToApply)
+    {
+        const transaction = new Transaction(client, db);
+
+        transaction.begin();
+
+
+        const Migration = require(`${process.cwd()}/migrations/${migration}`).default;
+
+        const mig = new Migration(db, transaction.getSession);
+
+        
+        if (!await mig.apply())
+        {
+            console.log(`Cannot apply migration "${migration}" - internal migration's validation failed.`)
+
+            await transaction.rollback();
+            continue;
+        }
+
+        await transaction.commit();
+
+
+        await db.collection("migrations").insertOne({ _id: new ObjectId, migration_name: migration, created_at: new Date });
+
+        console.log(`Migration "${migration}" successfully applied.`);
+    }
+
+
+    await client.close();
+
+    console.log("All migrations successfully applied.");
+}
+
+
+/**
  * Main execution function of CLI.
  * 
  * @async
@@ -192,6 +259,11 @@ async function main(command, args)
             }
 
             create(name);
+            break;
+        }
+        case "up":
+        {
+            await up();
             break;
         }
         default:

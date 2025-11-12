@@ -15,7 +15,8 @@
         "declarationDir": "./@types",
         "baseUrl": "./src",
         "paths": {
-            "@app/*": ["app/*"]
+            "@app/*": ["app/*"],
+            "@data/*": ["data/*"]
         },
         "emitDeclarationOnly": true
     },
