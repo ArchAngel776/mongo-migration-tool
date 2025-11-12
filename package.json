@@ -4,13 +4,17 @@
   "description": "Database migration tool for the MongoDB engine.",
   "main": "build/index.js",
   "scripts": {
-    "build": "npx babel src --out-dir build --extensions=\".ts\" && tsc"
+    "build": "npx babel src --out-dir build --extensions=\".ts\" && tsc",
+    "migration": "bin/migration.js"
   },
   "repository": "https://github.com/ArchAngel776/mongo-migrations.git",
   "author": "ArchAngel776",
   "license": "MIT",
   "private": false,
   "types": "@types",
+  "bin": {
+    "migration": "bin/migration.js"
+  },
   "devDependencies": {
     "@babel/cli": "^7.28.3",
     "@babel/core": "^7.28.5",
