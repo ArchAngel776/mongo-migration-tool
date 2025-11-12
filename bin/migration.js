@@ -75,6 +75,7 @@ class MigrationNameException extends Error
 /**
  * Prepare database structure for migrations system.
  * 
+ * @async
  * @returns {Promise<void>}
  */
 async function install()
