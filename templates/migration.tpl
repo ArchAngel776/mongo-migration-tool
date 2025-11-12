@@ -1,4 +1,4 @@
-import Migration from "mongo-migrations"
+import Migration from "mongo-migration-tool"
 
 
 export default class ${name} extends Migration
