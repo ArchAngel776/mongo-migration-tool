@@ -6,7 +6,7 @@ const fs = require("fs");
 const { Connection, Transaction } = require("../build/index");
 
 
-const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS } = process.env;
+const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS, DB_REPL } = process.env;
 
 const ROOT = process.cwd();
 
@@ -82,7 +82,7 @@ class MigrationNameException extends Error
  */
 async function install()
 {
-    const client = await Connection.create(DB_HOST, DB_PORT).connect(DB_NAME, DB_USER, DB_PASS);
+    const client = await Connection.create(DB_HOST, DB_PORT, DB_REPL).connect(DB_NAME, DB_USER, DB_PASS);
 
 
     const db = client.db(DB_NAME);
@@ -174,7 +174,7 @@ function create(name)
  */
 async function up()
 {
-    const client = await Connection.create(DB_HOST, DB_PORT).connect(DB_NAME, DB_USER, DB_PASS);
+    const client = await Connection.create(DB_HOST, DB_PORT, DB_REPL).connect(DB_NAME, DB_USER, DB_PASS);
     
     const db = client.db(DB_NAME);
 
@@ -249,7 +249,7 @@ async function up()
  */
 async function down(length)
 {
-    const client = await Connection.create(DB_HOST, DB_PORT).connect(DB_NAME, DB_USER, DB_PASS);
+    const client = await Connection.create(DB_HOST, DB_PORT, DB_REPL).connect(DB_NAME, DB_USER, DB_PASS);
     
     const db = client.db(DB_NAME);
 
