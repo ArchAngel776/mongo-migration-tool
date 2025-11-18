@@ -3,7 +3,7 @@
 const path = require("path");
 const fs = require("fs");
 
-const { Connection, Transaction } = require("../build/index");
+const { Connection, Transaction, templateName } = require("../build/index");
 
 
 const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASS, DB_REPL } = process.env;
@@ -160,7 +160,7 @@ function create(name)
 
     const content = template.replaceAll(/\$\{name\}/g, fullName);
 
-    fs.writeFileSync(path.resolve(ROOT, "migrations", `${fullName.toLocaleLowerCase()}.js`), content, { encoding: "utf-8" });
+    fs.writeFileSync(path.resolve(ROOT, "migrations", `${templateName(fullName)}.js`), content, { encoding: "utf-8" });
 
     console.log(`Migration "${fullName}" successfully created.`);
 }
