@@ -17,6 +17,7 @@
         "paths": {
             "@app/*": ["app/*"],
             "@data/*": ["data/*"],
+            "@exceptions/*": ["exceptions/*"],
             "@hooks/*": ["hooks/*"]
         },
         "emitDeclarationOnly": true
