@@ -1,4 +1,6 @@
-import { Db, ClientSession, Collection, Document } from "mongodb"
+import { Db, ClientSession, Collection, Document, CollectionInfo } from "mongodb"
+import CollectionNotFoundException from "@exceptions/CollectionNotFoundException"
+import CollectionHasNotValidatorException from "@exceptions/CollectionHasNotValidatorException"
 
 
 export default abstract class Migration
@@ -38,6 +40,35 @@ export default abstract class Migration
     public dropCollection(name: string): Promise<boolean>
     {
         return this.database.dropCollection(name)
+    }
+
+    public async getSchema<Schema extends Document>(name: string): Promise<Schema>
+    {
+        const [collection] = await this.database.listCollections<CollectionInfo>({ name }).toArray()
+
+        if (!collection)
+        {
+            throw new CollectionNotFoundException(name)
+        }
+
+        if (!collection.options?.validator?.$jsonSchema)
+        {
+            throw new CollectionHasNotValidatorException(name)
+        }
+
+        return collection.options.validator.$jsonSchema
+    }
+
+    public async updateSchema<Schema extends Document>(name: string, schema: Schema): Promise<boolean>
+    {
+        const { ok } = await this.database.command({
+            collMod: name,
+            validator: {
+                $jsonSchema: schema
+            }
+        })
+
+        return ok > 0
     }
 
     public hasIndex(name: string, collection: string): Promise<boolean>
